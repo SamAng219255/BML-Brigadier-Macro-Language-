@@ -1,0 +1,74 @@
+$root "main.bml"
+$import "spell_utilities.bml"
+
+$define SPELL_ITEM_6 {
+	poisonous_potato[use_cooldown={seconds:1.5,cooldown_group:"soul:spell"},consumable={consume_seconds:1,animation:"bow",has_consume_particles:false,sound:"minecraft:entity.evoker.prepare_summon",on_consume_effects:[{type:"play_sound",sound:"minecraft:entity.evoker.cast_spell"}]},use_remainder={id:"poisonous_potato",count:1,components:{custom_data:{spell:6},item_model:"soul:sculk_book",item_name:"\"Heal Other\"","!food":{},"!consumable":{},rarity:rare,lore:["\"Error\""]}},custom_data={spell:6},item_name="\"Heal Other\"",item_model="soul:sculk_book",lore=["{\"text\":\"Cost: 10\",\"color\":\"gray\",\"italic\":false}","\"\"","{\"text\":\"Fires a bolt of magic that\",\"color\":\"gold\",\"italic\":false}","{\"text\":\"heals 8 points of damage.\",\"color\":\"gold\",\"italic\":false}"],rarity=rare,!food,max_stack_size=1]
+}
+
+$GIVE_SPELL$(6; $SPELL_ITEM_6$;)
+
+$REPLACE_SPELL$(6; $SPELL_ITEM_6$;)
+
+$startpath "spells"
+$function spell6 {
+	/schedule function soul:replace/spell6 2t
+	/execute unless entity @s[scores={xp=10..}] unless entity @s[gamemode=creative] run return run playsound minecraft:entity.item.break player
+	/xp add @s[gamemode=!creative] -10 points
+	/summon item_display ^ ^ ^ {
+		item:{
+			id:"honeycomb",
+			count:1,
+			components:{
+				item_model:"soul:song_bullet"
+			}
+		},
+		billboard:"center",
+		Tags:[
+			"healing_bolt",
+			"setup"
+		],
+		teleport_duration:1,
+		CustomName:"\"Healing Bolt\""
+	}
+	/execute as @s at @s anchored eyes rotated as @s run tp @n[tag=healing_bolt,tag=setup] ^ ^ ^1 ~ ~
+	/execute as @n[tag=healing_bolt,tag=setup] at @s positioned ~-0.5 ~-0.5 ~-0.5 if entity @a[dx=0,dy=0,dz=0] run tag @s add inactive
+	$score @n[tag=healing_bolt,tag=setup] spell_age = 0
+	$score @n[tag=healing_bolt,tag=setup] spell_id = @s spell_id
+	/tag @n[tag=healing_bolt,tag=setup] remove setup
+}
+
+$define STEP {
+	/execute at @s if entity @s[tag=!destroyed] run function soul:ongoing/spell6a
+}
+
+$startpath "ongoing"
+$function spell6 {
+	/execute if entity @s[scores={spell_age=128..}] run return run kill @s
+	/execute if entity @s[tag=destroyed] run return run kill @s
+	/scoreboard players add @s spell_age 1
+	$STEP$
+	$STEP$
+	$STEP$
+	$STEP$
+	$STEP$
+	$STEP$
+	$STEP$
+	$STEP$
+}
+$function spell6a {
+	/tp ^ ^ ^0.25 
+	/execute if entity @s[tag=inactive] positioned ~-0.5 ~-0.5 ~-0.5 unless entity @a[dx=0,dy=0,dz=0] run tag @s remove inactive
+	/execute if entity @s[tag=inactive] run return fail
+	$if (positioned ~-0.5 ~-0.5 ~-0.5 if entity @e[type=#soul:mobs,dx=0,dy=0,dz=0] at @s;) {
+		/tag @s add destroyed
+		/execute as @a run scoreboard players operation @s temp = @s spell_id
+		/scoreboard players operation @a temp -= @s spell_id
+		/tag @n[type=#soul:mobs] add heal_tar
+		/execute as @n[type=#soul:mobs,tag=heal_tar] at @s unless entity @s[type=#inverted_healing_and_harm] run particle heart ~ ~1 ~ 0.25 0.5 0.25 0 10
+		/execute as @n[type=#soul:mobs,tag=heal_tar] at @s if entity @s[type=#inverted_healing_and_harm] run particle damage_indicator ~ ~1.5 ~ 0.1875 0.1875 0.1875 0 8
+		/damage @n[type=#inverted_healing_and_harm,tag=heal_tar] 8 magic by @s from @a[scores={temp=0},limit=1]
+		/effect give @n[type=#soul:mobs,tag=heal_tar] minecraft:instant_health 1 1
+		/tag @e[tag=heal_tar] remove heal_tar
+	}
+	/execute unless block ~ ~ ~ #soul:spell_transparent run kill @s
+}

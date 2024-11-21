@@ -1,0 +1,57 @@
+$namespace "flowerpots"
+$buildpath "../"
+$generated "generated"
+
+$function setup {
+	/scoreboard objectives add temp dummy
+}
+
+$startpath "give/flowers"
+$function rose {
+	/give @p armor_stand[entity_data={id:armor_stand,Invisible:true,NoGravity:true,Tags:["place_rose","place_flower"]},item_name="\"Rose\"",item_model=rose]
+}
+$function persephone {
+	/give @p armor_stand[
+		entity_data={
+			id:armor_stand,
+			Invisible:true,
+			Invisible:true,
+			Tags:[
+				"place_persephone",
+				"place_flower"
+			]
+		},
+		item_name="\"Persephone\"",
+		item_model=persephone,
+		lore=[
+			'{
+				"italic":false,
+				"text": "An ominous black flower."
+			}'
+		]
+	]
+}
+
+$startpath ""
+$function flowerpots {
+	$if (if entity @e[tag=place_flower];) {
+		/execute as @e[tag=place_flower] at @s unless block ~ ~ ~ #minecraft:air unless block ~ ~ ~ water align y run tp ~ ~1 ~
+		/execute at @e[tag=place_persephone] run summon item_display ~ ~1 ~ {Tags:["flower"],item:{id:"black_dye",count:1,components:{item_model:"persephone_block"}},item_display:head}
+		$while (if entity @e[tag=place_persephone];) {
+			/execute store result score k temp run random value 1..2
+			$if (if score k temp matches 1;) {
+				/execute at @e[tag=place_persephone,limit=1] run setblock ~ ~ ~ decorated_pot{sherds:["heartbreak_pottery_sherd","skull_pottery_sherd","skull_pottery_sherd","heartbreak_pottery_sherd"]}
+			}
+			$else {
+				/execute at @e[tag=place_persephone,limit=1] run setblock ~ ~ ~ decorated_pot{sherds:["skull_pottery_sherd","heartbreak_pottery_sherd","heartbreak_pottery_sherd","skull_pottery_sherd"]}
+			}
+			/kill @e[tag=place_persephone,limit=1]
+		}
+
+		/execute at @e[tag=place_rose] run summon item_display ~ ~1 ~ {Tags:["flower"],item:{id:"red_dye",count:1,components:{item_model:"rose_block"}},item_display:head}
+		/execute at @e[tag=place_rose] run setblock ~ ~ ~ decorated_pot
+
+		/kill @e[tag=place_flower]
+	}
+	/execute as @e[tag=flower] at @s unless block ~ ~-1 ~ decorated_pot run kill @s
+}
