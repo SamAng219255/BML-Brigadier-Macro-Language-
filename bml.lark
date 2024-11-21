@@ -1,0 +1,54 @@
+function_file: macro_command+
+mc_function: (mc_command | macro_command)*
+
+mc_command: /(((?<=[\s{(])|^)\/|(?<={)(?!}))([^"{]+?)((("[\s\S]*?(?<!\\)(\\\\)*?"[^"{]*?)|({[^"{]*?(?R)??[^"{]*?}[^"{]*?))*?)(\s(?=[\/$])|(?=})|(?<![BIL])(?=;))/
+macro_command: "$" (function_cmd | do_while_cmd | while_cmd | for_cmd | scoreif_cmd | score_cmd | ifelse_cmd | ifelseif_cmd | if_cmd | elseif_cmd | import_cmd | namespace_cmd | buildpath_cmd | startpath_cmd | generated_cmd | root_cmd | multiline_comment | comment | define_cmd) (" " | "\t" | "\n" | "\r")*
+
+condition: /[^;"]+?(".*?(?<!\\)(\\\\)*"([^;"]*?))*?(?=;)/
+
+function_cmd: ("function" | "func") (" " | "\t" | "\n" | "\r")+ /[a-zA-Z0-9._\-\/]+/ (" " | "\t" | "\n" | "\r")* "{" (" " | "\t" | "\n" | "\r")* mc_function "}"
+
+while_cmd: ("while" | "w") (" " | "\t" | "\n" | "\r")* "(" (" " | "\t" | "\n" | "\r")* condition ";" (" " | "\t" | "\n" | "\r")* ")" (" " | "\t" | "\n" | "\r")* "{" (" " | "\t" | "\n" | "\r")* mc_function "}"
+
+do_while_cmd: ("do" | "d") (" " | "\t" | "\n" | "\r")* "{" (" " | "\t" | "\n" | "\r")* mc_function "}" (" " | "\t" | "\n" | "\r")* "$" ("while" | "w") (" " | "\t" | "\n" | "\r")* "(" (" " | "\t" | "\n" | "\r")* condition ";" (" " | "\t" | "\n" | "\r")* ")"
+
+for_cmd: ("for" | "f") (" " | "\t" | "\n" | "\r")* "(" (" " | "\t" | "\n" | "\r")* (mc_command | macro_command) ";" (" " | "\t" | "\n" | "\r")* condition ";" (" " | "\t" | "\n" | "\r")* (mc_command | macro_command) ";" (" " | "\t" | "\n" | "\r")* ")" (" " | "\t" | "\n" | "\r")* "{" (" " | "\t" | "\n" | "\r")* mc_function "}"
+
+score_cmd: ("score" | "s") (" " | "\t" | "\n" | "\r")+ (name | selector) (" " | "\t" | "\n" | "\r")+ score ((" " | "\t" | "\n" | "\r")+ operation (" " | "\t" | "\n" | "\r")+ (number | (name | selector) (" " | "\t" | "\n" | "\r")+ score) | (" " | "\t" | "\n" | "\r")* increment)
+scoreif_cmd: ("scoreif" | "sif") (" " | "\t" | "\n" | "\r")+ "(" (" " | "\t" | "\n" | "\r")* condition ";" (" " | "\t" | "\n" | "\r")* ")" (" " | "\t" | "\n" | "\r")+ (name | selector) (" " | "\t" | "\n" | "\r")+ score ((" " | "\t" | "\n" | "\r")+ operation (" " | "\t" | "\n" | "\r")+ (number | (name | selector) (" " | "\t" | "\n" | "\r")+ score) | (" " | "\t" | "\n" | "\r")* increment)
+name: /[a-zA-Z_][0-9a-zA-Z_\-.+\/]*/
+score: /[a-zA-Z_][0-9a-zA-Z_\-.+\/]*/
+selector: /@[enapsr]/ [selector_arguments]
+selector_arguments: /\[(([^\[\]"]+|((?P<quoteC>['"])[\s\S]*?(?<!\\)[^\\]*?(\\\\)*?\g<quoteC>))*|([^\[\]"]+|((?P<quoteA>['"])[\s\S]*?(?<!\\)[^\\]*?(\\\\)*?\g<quoteA>))*((?R))([^\[\]"]+|((?P<quoteB>['"])[\s\S]*?(?<!\\)[^\\]*?(\\\\)*?\g<quoteB>))*)*\]/
+operation: /[+\-*\/%]?=|><|>|</
+number: /-?\d+/
+increment: /\+\+|--/
+
+if_cmd: ("if" | "with" | "execute") (" " | "\t" | "\n" | "\r")* "(" (" " | "\t" | "\n" | "\r")* condition ";" (" " | "\t" | "\n" | "\r")* ")" (" " | "\t" | "\n" | "\r")* "{" (" " | "\t" | "\n" | "\r")* mc_function "}"
+
+ifelseif_cmd: "if" (" " | "\t" | "\n" | "\r")* "(" (" " | "\t" | "\n" | "\r")* condition ";" (" " | "\t" | "\n" | "\r")* ")" (" " | "\t" | "\n" | "\r")* "{" (" " | "\t" | "\n" | "\r")* mc_function "}" (" " | "\t" | "\n" | "\r")* ("$" elseif_cmd (" " | "\t" | "\n" | "\r")*)+
+ifelse_cmd: "if" (" " | "\t" | "\n" | "\r")* "(" (" " | "\t" | "\n" | "\r")* condition ";" (" " | "\t" | "\n" | "\r")* ")" (" " | "\t" | "\n" | "\r")* "{" (" " | "\t" | "\n" | "\r")* mc_function "}" (" " | "\t" | "\n" | "\r")* ("$" elseif_cmd (" " | "\t" | "\n" | "\r")*)* "$else" (" " | "\t" | "\n" | "\r")* "{" (" " | "\t" | "\n" | "\r")* mc_function "}"
+elseif_cmd: ("elseif" | "else if" | "ifreturn") (" " | "\t" | "\n" | "\r")* "(" (" " | "\t" | "\n" | "\r")* condition ";" (" " | "\t" | "\n" | "\r")* ")" (" " | "\t" | "\n" | "\r")* "{" (" " | "\t" | "\n" | "\r")* mc_function "}"
+
+import_cmd: "import" (" " | "\t" | "\n" | "\r")* /(?P<quote>['"])[\s\S]*?(?<!\\)[^\\]*?(\\\\)*?\g<quote>/
+
+namespace_cmd: "namespace" (" " | "\t" | "\n" | "\r")* /(?P<quote>['"])[\s\S]*?(?<!\\)[^\\]*?(\\\\)*?\g<quote>/
+
+buildpath_cmd: "buildpath" (" " | "\t" | "\n" | "\r")* /(?P<quote>['"])[\s\S]*?(?<!\\)[^\\]*?(\\\\)*?\g<quote>/
+
+startpath_cmd: "startpath" (" " | "\t" | "\n" | "\r")* /(?P<quote>['"])[\s\S]*?(?<!\\)[^\\]*?(\\\\)*?\g<quote>/
+
+generated_cmd: "generated" (" " | "\t" | "\n" | "\r")* /(?P<quote>['"])[\s\S]*?(?<!\\)[^\\]*?(\\\\)*?\g<quote>/
+
+root_cmd: "root" (" " | "\t" | "\n" | "\r")* /(?P<quote>['"])[\s\S]*?(?<!\\)[^\\]*?(\\\\)*?\g<quote>/
+
+comment: "#" [/[^#\n][^\n]*/] "\n"
+multiline_comment: /##[\s\S]+?##\$/
+
+define_cmd: "define" (" " | "\t" | "\n" | "\r")* replacement_name (" " | "\t" | "\n" | "\r")* ("(" (" " | "\t" | "\n" | "\r")* replacement_arg ("," (" " | "\t" | "\n" | "\r")* replacement_arg)* (" " | "\t" | "\n" | "\r")* ")")? (" " | "\t" | "\n" | "\r")* "{" replacement_value "}"
+replacement_name: /[a-zA-Z_0-9]+/
+replacement_arg: /[a-zA-Z_0-9]+/
+replacement_value: /(?<={)[^{}]*({(?R)}[^{}]*)*(?=})/
+
+replacement_cmd: "$" replacement_name "$" ( "(" ((" " | "\t" | "\n" | "\r")* replacement_arg_value (" " | "\t" | "\n" | "\r")* ";")+ (" " | "\t" | "\n" | "\r")* ")" )?
+replacement_arg_value: /(?<=^|;|\()\s*([^"'()]*?(?:(?:(?P<quote>['"])[\s\S]*?(?<!\\)[^\\]*?(?:\\\\)*?\g<quote>|\([^()]*(?R)[^()]*\))[^"'()]*?)*?)(?=;|\))/

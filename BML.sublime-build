@@ -1,0 +1,5 @@
+{
+	"selector": "source.bml",
+	"file_patterns": ["*.bml"],
+	"cmd": ["python3", "$packages/brigadier-macro-language/build_bml.py", "$packages/brigadier-macro-language/bml.lark", "$file"]
+}
