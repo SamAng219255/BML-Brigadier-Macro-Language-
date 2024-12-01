@@ -8,7 +8,7 @@ The build program (transpiler) requires the `regex` and `lark` libraries and use
 The build program takes two arguments, the Lark language description and the target file, as follows:
 `$ python3 build_bml.py bml.lark example.bml`
 ## BML Language
-BML uses two types commands, called macro commands and Minecraft commands respectively. Minecraft commands begin with a forward slash ("/") and are passed to the output file after getting reformatted. Macro commands begin with a dollar sign ("$") and indicate a task for the transpiler.
+BML uses two types of commands, called macro commands and Minecraft commands respectively. Minecraft commands begin with a forward slash ("/") and are passed to the output file after getting reformatted. Macro commands begin with a dollar sign ("$") and indicate a task for the transpiler.
 
 A formal description of BML can be found in bml.lark which uses ebnf to describe the language and is used by the script to parse files.
 ### Minecraft Commands
@@ -80,13 +80,13 @@ Function names can only be composed of upper and lower case letters ("A"–"Z"),
 
 `$if ( <execute arguments>; ) { ... }` or `$with ( <execute arguments>; ) { ... }` or `$execute ( <execute arguments>; ) { ... }`
 
-Creates an automatically generated function file which is called from current function in the format `/execute <execute arguments> run function ...`. In this way, it creates and executes a function with the conditions and context given inside the parentheses ("(" and ")"). The arguments to the execute command, found in the parentheses, must end in a semicolon.
+Creates an automatically generated function file which is called from the current function in the format `/execute <execute arguments> run function ...`. In this way, it creates and executes a function with the conditions and context given inside the parentheses ("(" and ")"). The arguments to the execute command, found in the parentheses, must end in a semicolon.
 
 `$if ( <execute arguments>; ) { ... } $else { ... }` or `$if ( <execute arguments>; ) { ... } $elseif ( <execute arguments>; ) { ... } $else { .. }` or `$if ( <execute arguments>; ) { ... } $else if ( <execute arguments>; ) { ... } $else { .. }`
 
-This command creates two or more separate generated function files. Each ones contains the contents of one of the pairs of braces ("{" and "}"). The values of the parentheses ("(" and ")") operate the same the standalone `$if` command.
+This command creates two or more separate generated function files. Each one contains the contents of one of the pairs of braces ("{" and "}"). The values of the parentheses ("(" and ")") operate the same as the standalone `$if` command.
 
-The "else" function is called directly from the current function (`/function ...`). All other functions are called in order from the beginning of the "else" function with an "execute...return" call (`/execute ... run return run function ...`). This makes them end execute of the else file if the conditions pass.
+The "else" function is called directly from the current function (`/function ...`). All other functions are called in order from the beginning of the "else" function with an "execute...return" call (`/execute ... run return run function ...`). This makes them end execution of the else file if the conditions pass.
 
 `$ifreturn ( <execute arguments>; ) { ... }`
 
@@ -120,11 +120,23 @@ If the operator is `++` or `--`, the command takes no more arguments and evaluat
 
 If the operator is `+=`, `-=`, or `=` and there is only one more argument, it must be a number and the command evaluates to `/scoreboard players add <name> <score> <number>`, `/scoreboard players remove <name> <score> <number>`, or `/scoreboard players set <name> <score> <number>` respectively.
 
-If the operator is anything other than `--` or `++` and there are two more arguments, they must be a second name and a second score and the command evaluates to `/scoreobard players operation <name 1> <score 1> <operation> <name 2> <score 2>`.
+If the operator is anything other than `--` or `++` and there are two more arguments, they must be a second name and a second score and the command evaluates to `/scoreboard players operation <name 1> <score 1> <operation> <name 2> <score 2>`.
+
+`$scoreif ( <execute arguments>; ) <name> <score> <operator> ...` or  `$sif ( <execute arguments>; ) <name> <score> <operator> ...`
+
+Functions as `$score` except the command is run by an execute command with the listed arguments (`/execute <execute arguments> run scoreboard ...`).
 
 ### Comments
 .mcfunction comments can be added by starting with a `/#`. They are not evaluated any differently than other Minecraft commands and whitespace is compressed and trimmed the same way and the next line/command is assumed to start at the next forward slash ("/") or dollar sign ("$") that is preceded with whitespace and not inside of a double quote (") or brace ("{" and "}") bounded string or snbt object.
 
 BML comments are designated using `$# ...` and last until the end of the line. Any characters between the beginning of the command and the end of the line are ignored.
 
-Multi-line BML comments are designeted using `$## ... ##$` and any characters between the two ends are ignored.
+Multi-line BML comments are designated using `$## ... ##$` and any characters between the two ends are ignored.
+
+### Minecraft Macros
+
+Minecraft's own macro functions can be used as normal  with the following notes. 
+
+Minecraft functions containing macros are still preceded by a slash which comes before the dollar sign ("/$"). 
+
+Whenever a dollar sign begins an argument, it must be escaped ("\") or else it will be treated as the beginning of a new macro command.
