@@ -1,7 +1,7 @@
-function_file: macro_command+
+function_file: (" " | "\t" | "\n" | "\r")* macro_command+
 mc_function: (mc_command | macro_command)*
 
-mc_command: /(((?<=[\s{(])|^)\/|(?<={)(?!}))([^"{]+?)((("[\s\S]*?(?<!\\)(\\\\)*?"[^"{]*?)|({[^"{]*?(?R)??[^"{]*?}[^"{]*?))*?)(\s(?=[\/$])|(?=})|(?<![BIL])(?=;))/
+mc_command: /(((?<=[\s{(])|^)\/|(?<={)(?!}))([^"'{]*?)((((?P<quote>["'])[\s\S]*?(?<!\\)(\\\\)*?\g<quote>[^"'{]*?)|({[^"'{]*?(?R)??[^"'{]*?}[^"'{]*?))*?)(\s(?=[\/$])|(?=})|(?<![BIL])(?=;))/
 macro_command: "$" (function_cmd | do_while_cmd | while_cmd | for_cmd | scoreif_cmd | score_cmd | ifelse_cmd | ifelseif_cmd | if_cmd | elseif_cmd | import_cmd | namespace_cmd | buildpath_cmd | startpath_cmd | generated_cmd | root_cmd | multiline_comment | comment | define_cmd) (" " | "\t" | "\n" | "\r")*
 
 condition: /[^;"]+?(".*?(?<!\\)(\\\\)*"([^;"]*?))*?(?=;)/
@@ -42,7 +42,7 @@ generated_cmd: "generated" (" " | "\t" | "\n" | "\r")* /(?P<quote>['"])[\s\S]*?(
 
 root_cmd: "root" (" " | "\t" | "\n" | "\r")* /(?P<quote>['"])[\s\S]*?(?<!\\)[^\\]*?(\\\\)*?\g<quote>/
 
-comment: "#" [/[^#\n][^\n]*/] "\n"
+comment: /#([^#\n][^\n]*)?\n/
 multiline_comment: /##[\s\S]+?##\$/
 
 define_cmd: "define" (" " | "\t" | "\n" | "\r")* replacement_name (" " | "\t" | "\n" | "\r")* ("(" (" " | "\t" | "\n" | "\r")* replacement_arg ("," (" " | "\t" | "\n" | "\r")* replacement_arg)* (" " | "\t" | "\n" | "\r")* ")")? (" " | "\t" | "\n" | "\r")* "{" replacement_value "}"

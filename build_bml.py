@@ -90,6 +90,7 @@ def apply_replacements(_func_file, known_macros):
 def process_mc_command(_cmd_str):
 	cmd_str = _cmd_str.strip()
 	cmd_str = regex.sub(r'[\s]+(?=(?:(?:\\.|[^"\\])*"(?:\\.|[^"\\])*")*(?:\\.|[^"\\])*\Z)', ' ', cmd_str)
+	cmd_str = regex.sub(r' \\\$', ' $', cmd_str)
 	if cmd_str[:4] == 'say ' or cmd_str[:3] == 'me ':
 		cmd_str = regex.sub(r'(?P<quote>[\'"])([\s\S]*?(?<!\\)[^\\]*?(\\\\)*?)\g<quote>', '\\2', cmd_str)
 	return cmd_str + '\n'
@@ -119,7 +120,7 @@ def build(lang_def, file, _namespace = "minecraft", _buildpath = "", _startpath 
 			return ret
 		return 0
 	#Perform replacements
-	func_file = regex.sub(r'\$#[^\n\r]*', '', func_file)
+	func_file = regex.sub(r'\$#([^#\n][^\n]*)?(?=[\n\r])', '', func_file)
 	known_macros = find_replacements(func_file)
 	for import_match in regex.finditer(r'(^|(?<=[\n\r]))\$import\s+(?P<quote>[\'"])(?P<import_file>[\s\S]*?(?<!\\)[^\\]*?(\\\\)*?)\g<quote>', func_file):
 		f = open(import_match.group('import_file'), "r")
